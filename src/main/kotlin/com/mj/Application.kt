@@ -7,9 +7,9 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    configureHTTP()
     configureDatabases()
+    configurePlugins()
+
+    //서버 실행 여부 테스트용
     configureRouting()
-    callLoggingConfiguration()
-    configureContentNegotiation()
 }
