@@ -1,5 +1,7 @@
 package com.mj
 
+import com.mj.local.model.User
+import com.mj.local.user.UserRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -7,26 +9,19 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.*
 
-fun Application.configureDatabases() {
-    val database = Database.connect(
-        url = "jdbc:h2:~/playground",
-        user = "sa",
-        driver = "org.h2.Driver",
-        password = "",
-    )
-    val userService = UserService(database)
+fun Application.configureDatabases(repository: UserRepository) {
     routing {
         // Create user
         post("/users") {
-            val user = call.receive<ExposedUser>()
-            val id = userService.create(user)
+            val user = call.receive<User>()
+            val id = repository.addUser(user)
             call.respond(HttpStatusCode.Created, id)
         }
         
         // Read user
         get("/users/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            val user = userService.read(id)
+            val user = repository.getUser(id)
             if (user != null) {
                 call.respond(HttpStatusCode.OK, user)
             } else {
@@ -37,15 +32,15 @@ fun Application.configureDatabases() {
         // Update user
         put("/users/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            val user = call.receive<ExposedUser>()
-            userService.update(id, user)
+            val user = call.receive<User>()
+            repository.updateUser(id, user)
             call.respond(HttpStatusCode.OK)
         }
         
         // Delete user
         delete("/users/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            userService.delete(id)
+            repository.removeUser(id)
             call.respond(HttpStatusCode.OK)
         }
     }

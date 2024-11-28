@@ -1,14 +1,11 @@
-package com.mj
+package com.mj.local.user
 
+import com.mj.local.model.User
 import kotlinx.coroutines.Dispatchers
-import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
-
-@Serializable
-data class ExposedUser(val name: String, val age: Int)
 
 class UserService(database: Database) {
     object Users : Table() {
@@ -25,23 +22,23 @@ class UserService(database: Database) {
         }
     }
 
-    suspend fun create(user: ExposedUser): Int = dbQuery {
+    suspend fun create(user: User): Int = dbQuery {
         Users.insert {
             it[name] = user.name
             it[age] = user.age
         }[Users.id]
     }
 
-    suspend fun read(id: Int): ExposedUser? {
+    suspend fun read(id: Int): User? {
         return dbQuery {
             Users.selectAll()
                 .where { Users.id eq id }
-                .map { ExposedUser(it[Users.name], it[Users.age]) }
+                .map { User(it[Users.name], it[Users.age]) }
                 .singleOrNull()
         }
     }
 
-    suspend fun update(id: Int, user: ExposedUser) {
+    suspend fun update(id: Int, user: User) {
         dbQuery {
             Users.update({ Users.id eq id }) {
                 it[name] = user.name
