@@ -1,4 +1,4 @@
-package com.mj.local.model
+package com.mj.local.model.vo
 
 import kotlinx.serialization.Serializable
 

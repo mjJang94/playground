@@ -1,6 +1,6 @@
 package com.mj.local.user
 
-import com.mj.local.model.User
+import com.mj.local.model.vo.User
 
 class UserRepositoryImpl : UserRepository {
     override val service: UserService

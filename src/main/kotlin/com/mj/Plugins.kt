@@ -1,24 +1,38 @@
 package com.mj
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
 import io.ktor.events.EventDefinition
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
+import io.ktor.server.response.*
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 
 fun Application.configurePlugins() {
     install(ApplicationMonitoringPlugin)
+    configureNegotiation()
+    configureCallLog()
+    configureSecurity()
+}
+
+private fun Application.configureNegotiation() {
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
             isLenient = true
         })
     }
+}
+
+private fun Application.configureCallLog() {
     install(CallLogging) {
         level = Level.INFO
         format { call ->
@@ -27,6 +41,31 @@ fun Application.configurePlugins() {
             val path = call.request.path()
             val processTime = call.processingTimeMillis()
             "$status $httpMethod - $path response in ${processTime}ms"
+        }
+    }
+}
+private fun Application.configureSecurity() {
+    authentication {
+        jwt {
+            realm = TokenManager.realm
+            verifier(
+                JWT
+                    .require(Algorithm.HMAC256(TokenManager.secret))
+                    .withAudience(TokenManager.audience)
+                    .withIssuer(TokenManager.issuer)
+                    .build()
+            )
+            validate { credential ->
+                if (!credential.payload.getClaim("username").asString().isNullOrEmpty()) {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+            challenge { _, _ ->
+                call.response.headers.append(HttpHeaders.WWWAuthenticate, "Bearer")
+                call.respond(status = HttpStatusCode.Unauthorized, "Unauthorized!")
+            }
         }
     }
 }

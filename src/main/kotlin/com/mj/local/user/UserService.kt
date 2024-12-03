@@ -1,6 +1,6 @@
 package com.mj.local.user
 
-import com.mj.local.model.User
+import com.mj.local.model.vo.User
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
